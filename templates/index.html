@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movie Recommender</title>
+</head>
+<body>
+  <h1>Hybrid Movie Recommendation</h1>
+  <form id="form">
+    <input type="text" id="title" placeholder="Enter movie title" />
+    <button type="submit">Get Recommendations</button>
+  </form>
+  <ul id="results"></ul>
+
+  <script>
+    document.getElementById('form').onsubmit = async function (e) {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const res = await fetch('/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      const data = await res.json();
+      const results = document.getElementById('results');
+      results.innerHTML = '';
+      if (data.recommendations) {
+        data.recommendations.forEach(movie => {
+          const li = document.createElement('li');
+          li.textContent = movie;
+          results.appendChild(li);
+        });
+      } else {
+        results.innerHTML = `<li>${data.error}</li>`;
+      }
+    };
+  </script>
+</body>
+</html>
