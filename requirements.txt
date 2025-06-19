@@ -1,7 +1,7 @@
 pandas
 numpy
-#ast
 scikit-learn
 spicy
 joblib
 flask
+git+https://github.com/NicolasHug/Surprise.git

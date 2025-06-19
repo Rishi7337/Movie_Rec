@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Movie Recommender</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hybrid Movie Recommender</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>Hybrid Movie Recommendation</h1>
-  <form id="form">
-    <input type="text" id="title" placeholder="Enter movie title" />
-    <button type="submit">Get Recommendations</button>
-  </form>
-  <ul id="results"></ul>
+  <div class="container">
+    <!-- Popular -->
+    <h2>Popular Movies</h2>
+    <div id="popular" class="movie-row"></div>
 
-  <script>
-    document.getElementById('form').onsubmit = async function (e) {
-      e.preventDefault();
-      const title = document.getElementById('title').value;
-      const res = await fetch('/recommend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
-      });
-      const data = await res.json();
-      const results = document.getElementById('results');
-      results.innerHTML = '';
-      if (data.recommendations) {
-        data.recommendations.forEach(movie => {
-          const li = document.createElement('li');
-          li.textContent = movie;
-          results.appendChild(li);
-        });
-      } else {
-        results.innerHTML = `<li>${data.error}</li>`;
-      }
-    };
-  </script>
+    <!-- Latest -->
+    <h2>Latest Movies</h2>
+    <div id="latest" class="movie-row"></div>
+
+    <!-- Recommendations Form -->
+    <h2>Get Recommendations</h2>
+    <form id="form">
+      <input id="title" placeholder="Enter a movie title..." required />
+      <button type="submit">Recommend</button>
+    </form>
+
+    <!-- Recommendations Result -->
+    <h2>Recommendations</h2>
+    <div id="results" class="movie-row"></div>
+
+    <!-- Movie Modal -->
+    <div id="movieModal" class="modal">
+      <div class="modal-content" id="modalContent"></div>
+      <span id="closeModal" class="close">&times;</span>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

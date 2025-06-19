@@ -5,8 +5,9 @@ __pycache__/
 
 # C extensions
 *.so
-
-
+.env
+notebooks/
+data/
 credits.csv
 keywords.csv
 links_small.csv
@@ -14,6 +15,7 @@ links.csv
 ratings.csv
 ratings_small.csv
 movies_metadata.csv
+updated_movie_metadeta.csv
 # Distribution / packaging
 .Python
 build/
@@ -200,3 +202,4 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+.early.coverage
