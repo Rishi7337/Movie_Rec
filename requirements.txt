@@ -1,7 +1,10 @@
 pandas
 numpy
+cython
 scikit-learn
-spicy
+scipy
 joblib
 flask
+requests
+python-dotenv
 git+https://github.com/NicolasHug/Surprise.git
