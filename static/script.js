@@ -79,6 +79,7 @@ function showModal(movie) {
   const genres = Array.isArray(movie.genres) ? movie.genres.join(', ') : 'N/A';
 
   content.innerHTML = `
+    <span id="closeModal" class="close">&times;</span>
     <h2>${movie.title}</h2>
     <img src="${movie.poster_path || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}">
     <p><strong>Release:</strong> ${movie.release_date || 'Unknown'}</p>
@@ -89,9 +90,11 @@ function showModal(movie) {
   `;
 
   modal.style.display = 'block';
+
+  // Close modal on click
+  document.getElementById('closeModal').onclick = function () {
+    modal.style.display = 'none';
+  };
 }
 
-// Close modal on click
-document.getElementById('closeModal').onclick = function () {
-  document.getElementById('movieModal').style.display = 'none';
-};
+

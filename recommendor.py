@@ -25,7 +25,7 @@ def fetch_movie_details_by_id(tmdb_id, api_key, retries=3, delay=0.25):
 
             poster_path = data.get("poster_path")
             return {
-                "poster_path": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
+                "poster_path": f"https://image.tmdb.org/t/p/w185{poster_path}" if poster_path else None
             }
 
         except requests.RequestException as e:
