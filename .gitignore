@@ -3,11 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+saved_model/
+saved_model2/
+
 # C extensions
 *.so
 .env
 notebooks/
 data/
+
 credits.csv
 keywords.csv
 links_small.csv

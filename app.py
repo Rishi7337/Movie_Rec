@@ -5,7 +5,7 @@ from recommendor import HybridRecommender  # Assuming your class is in recommend
 app = Flask(__name__)
 
 # Load the saved model once at startup
-recommender = HybridRecommender.load("saved_model/")
+recommender = HybridRecommender.load("saved_model3/")
 
 @app.route('/')
 def index():

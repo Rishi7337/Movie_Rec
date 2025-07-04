@@ -6,12 +6,15 @@ import joblib
 from sklearn.preprocessing import MultiLabelBinarizer, MinMaxScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
-from scipy.sparse import hstack
+from scipy.sparse import hstack,csr_matrix
 import math
 import requests
 from dotenv import load_dotenv
 import requests
 import time
+from sklearn.decomposition import TruncatedSVD
+from difflib import get_close_matches
+
 
 def fetch_movie_details_by_id(tmdb_id, api_key, retries=3, delay=0.25):
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}"
@@ -36,7 +39,7 @@ def fetch_movie_details_by_id(tmdb_id, api_key, retries=3, delay=0.25):
 
 
 class HybridRecommender:
-    def __init__(self, path, save_dir="saved_model/"):
+    def __init__(self, path, save_dir="saved_model3/"):
         self.save_dir = save_dir
         self.df = pd.read_csv(path)
         self._prepare_data()
@@ -44,47 +47,55 @@ class HybridRecommender:
         self.save()
 
     def _prepare_data(self):
-        # Convert genre strings back to list
+        # -- Genres to list --
         self.df['genres'] = self.df['genres'].apply(ast.literal_eval)
 
-        # TF-IDF on overview
+        # -- TF-IDF on overview (with stopwords removal) --
         self.df['overview'] = self.df['overview'].fillna("")
-        self.tfidf = TfidfVectorizer(max_features=5000)
+        self.tfidf = TfidfVectorizer(max_features=5000, stop_words='english')
         self.overview_vec = self.tfidf.fit_transform(self.df['overview'])
+        print(self.overview_vec.shape)
+        # self.svd = TruncatedSVD(n_components=600)  # Reduce overview vector from 10k → 300
+        # self.overview_vec = self.svd.fit_transform(self.overview_vec)
+        # self.overview_vec = csr_matrix(self.overview_vec)  # for hstack
 
-        # Genre one-hot encoding
-        self.mlb = MultiLabelBinarizer()
+        # -- Genre one-hot encoding --
+        self.mlb = MultiLabelBinarizer(sparse_output=True)
         self.genre_vec = self.mlb.fit_transform(self.df['genres'])
 
-        # Numeric features
+        # -- Numeric features (cleaned, scaled) --
         numeric_cols = ['popularity', 'vote_average', 'runtime']
-        for col in numeric_cols:
-            self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
-        self.df[numeric_cols] = self.df[numeric_cols].fillna(0)
-
+        self.df[numeric_cols] = self.df[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0)
         self.scaler = MinMaxScaler()
-        self.numeric_vec = self.scaler.fit_transform(self.df[numeric_cols])
+        self.numeric_vec = csr_matrix(self.scaler.fit_transform(self.df[numeric_cols]))
 
-        # Combine all features
-        self.final_features = hstack([self.overview_vec, self.genre_vec, self.numeric_vec])
+        # -- Combine all sparse features --
+        self.final_features = hstack([self.overview_vec, self.genre_vec, self.numeric_vec]).tocsr()
 
     def _build_model(self):
         self.nn = NearestNeighbors(metric='cosine', algorithm='brute')
         self.nn.fit(self.final_features)
 
-    
-
-
     def recommend(self, title, n=5):
-        title = title.lower()
+        title = title.strip().lower()
         matches = self.df[self.df['title'].str.lower() == title]
+
         if matches.empty:
-            return { "error": "Movie not found." }
+            all_titles = self.df['title'].str.lower().tolist()
+            close_matches = get_close_matches(title, all_titles, n=3, cutoff=0.6)
+            if close_matches:
+                return {
+                    "error": f"Movie '{title}' not found. Did you mean: {close_matches}?"
+                }
+            else:
+                return {
+                    "error": f"Movie '{title}' not found in the database."
+                }
         idx = matches.index[0]
         vec = self.final_features.getrow(idx)  # safer than indexing directly
         distances, indices = self.nn.kneighbors(vec, n_neighbors=n+1)
 
-        recommended_rows = self.df.iloc[indices[0][1:]]
+        recommended_rows = self.df.iloc[indices[0][0:]]
 
         results = []
         for _, row in recommended_rows.iterrows():
@@ -165,7 +176,7 @@ class HybridRecommender:
         self.df.to_csv(os.path.join(self.save_dir, "movie_metadata.csv"), index=False)
 
     @staticmethod
-    def load(path="saved_model/"):
+    def load(path="saved_model3/"):
         model = HybridRecommender.__new__(HybridRecommender)
         model.save_dir = path
         model.nn = joblib.load(os.path.join(path, "nn_model.joblib"))

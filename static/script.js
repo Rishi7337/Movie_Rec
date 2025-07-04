@@ -42,11 +42,13 @@ document.getElementById('form').onsubmit = async function (e) {
     const data = await res.json();
     results.innerHTML = '';
 
-    if (Array.isArray(data)) {
-      data.forEach(movie => {
-        results.appendChild(createMovieCard(movie));
+    if (Array.isArray(data) && data.length > 0) {
+      results.appendChild(createMovieCard(data[0], true)); // highlight searched movie
+
+      data.slice(1).forEach(movie => {
+      results.appendChild(createMovieCard(movie));
       });
-    } else if (data.error) {
+    }else if (data.error) {
       results.innerHTML = `<p class="error">${data.error}</p>`;
     } else {
       results.innerHTML = `<p class="error">Unexpected response format.</p>`;
@@ -58,12 +60,14 @@ document.getElementById('form').onsubmit = async function (e) {
 };
 
 // Create a horizontal card-style movie element
-function createMovieCard(movie) {
+function createMovieCard(movie,isSearched = false) {
   const card = document.createElement('div');
   card.className = 'movie-card';
+  if (isSearched) card.classList.add('searched-movie');
   card.innerHTML = `
     <img src="${movie.poster_path || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}">
     <h4>${movie.title}</h4>
+    ${isSearched ? '<p class="badge">You searched for this movie</p>' : ''}
   `;
 
   // Click to open modal
@@ -76,25 +80,32 @@ function createMovieCard(movie) {
 function showModal(movie) {
   const modal = document.getElementById('movieModal');
   const content = document.getElementById('modalContent');
-  const genres = Array.isArray(movie.genres) ? movie.genres.join(', ') : 'N/A';
-
+  let genresList = movie.genres;
+  if (Array.isArray(genresList)) {
+    genresList = genresList.map(g => g.replace(/[\[\]']+/g, '').trim());
+  }
+  const genres = genresList.join(', ');
   content.innerHTML = `
     <span id="closeModal" class="close">&times;</span>
-    <h2>${movie.title}</h2>
     <img src="${movie.poster_path || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}">
-    <p><strong>Release:</strong> ${movie.release_date || 'Unknown'}</p>
-    <p><strong>Runtime:</strong> ${movie.runtime ? movie.runtime + ' mins' : 'N/A'}</p>
-    <p><strong>Rating:</strong> ${movie.vote_average ?? 'N/A'}</p>
-    <p><strong>Genres:</strong> ${genres}</p>
-    <p>${movie.overview}</p>
+    <div class="modal-details">
+      <h2>${movie.title}</h2>
+      <p><strong>Release:</strong> ${movie.release_date || 'Unknown'}</p>
+      <p><strong>Runtime:</strong> ${movie.runtime ? movie.runtime + ' mins' : 'N/A'}</p>
+      <p><strong>Rating:</strong> ${movie.vote_average ?? 'N/A'}</p>
+      <p><strong>Genres:</strong> ${genres}</p>
+      <p>${movie.overview}</p>
+    </div>
   `;
 
   modal.style.display = 'block';
 
-  // Close modal on click
+  // Close modal on click and cleanup
   document.getElementById('closeModal').onclick = function () {
     modal.style.display = 'none';
+    content.innerHTML = ''; // Clear content for next use
   };
 }
+
 
 
